@@ -1,0 +1,21 @@
+{
+  "name": "react-blur-img-loader",
+  "version": "0.0.1",
+  "description": "A webpack loader for progressive images wrapped as React component",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webpack",
+    "progressive",
+    "react",
+    "image",
+    "file-loader"
+  ],
+  "author": "Gobedashvili Bagrat",
+  "license": "ISC",
+  "dependencies": {
+    "file-loader": "^6.2.0"
+  }
+}
