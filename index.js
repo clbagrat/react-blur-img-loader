@@ -24,7 +24,6 @@ module.exports = function loader(content) {
     mimeTypes[extensionMatch[1]]
   };base64,${Buffer.from(content).toString("base64")}`;
 
-  console.log(options.limit, content.length);
   if (options.limit && content.length < options.limit) {
     return `
     import React, {useState} from 'react';
