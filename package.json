@@ -16,6 +16,8 @@
   "author": "Gobedashvili Bagrat",
   "license": "ISC",
   "dependencies": {
-    "file-loader": "^6.2.0"
+    "canvas": "^2.7.0",
+    "file-loader": "6.1.1",
+    "loader-utils": "^2.0.0"
   }
 }
