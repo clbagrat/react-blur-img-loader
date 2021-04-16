@@ -1,6 +1,6 @@
 {
   "name": "react-blur-img-loader",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A webpack loader for progressive images wrapped as React component",
   "main": "index.js",
   "scripts": {
