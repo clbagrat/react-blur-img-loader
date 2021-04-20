@@ -9,6 +9,7 @@ module.exports = function loader(content) {
       "unexpected file extension. Supported extension: jpg, svg, png"
     );
   }
+
   const options = getOptions(this) || {};
 
   const mimeTypes = {
@@ -29,9 +30,11 @@ module.exports = function loader(content) {
     import React, {useState} from 'react';
 
     export default function ({imageStyles = {width: "100%"}, ...rest}) {
+      const optImageStyles = rest.className ? {} : {...${optImageStyles}, ...imageStyles};
+
       return (
         <React.Fragment>
-          <img {...rest} src={"${img64}"} style={{ ...imageStyles, ...${optImageStyles}}} />
+          <img {...rest} src={"${img64}"} style={{ ...optImageStyles}} />
         </React.Fragment>
       )
     }
@@ -41,7 +44,7 @@ module.exports = function loader(content) {
   let img = new Image();
   img.src = img64;
 
-  const { thumbnailMaxWidth = 100, thumbnailMaxHeight = 100 } = options;
+  const { thumbnailMaxWidth = 50, thumbnailMaxHeight = 50 } = options;
 
   const maxWidth = Math.min(thumbnailMaxWidth, img.width);
   const maxHeight = Math.min(thumbnailMaxHeight, img.height);
@@ -54,11 +57,9 @@ module.exports = function loader(content) {
     height = maxHeight;
   }
 
-  width = Math.floor(width);
-  height = Math.floor(height);
-
   const canvas = createCanvas(width, height);
   const context2d = canvas.getContext(`2d`);
+  canvas.height = height;
   context2d.drawImage(img, 0, 0, width, height);
   const thumbnail = canvas.toDataURL("image/png");
 
@@ -76,18 +77,22 @@ module.exports = function loader(content) {
   return `
     import React, {useState} from 'react';
 
-    export default function ({thumbnailStyles = { width: "100%", height: "100%" }, imageStyles = {width: "100%"}, thumbnailClassName, ...rest}) {
+    export default function ({thumbnailStyles = { width: "100%" }, imageStyles = { width: "100%" }, thumbnailClassName, ...rest}) {
       const [loaded, setLoaded] = useState(false);
       const onLoad = () => {
-        setLoaded(true);
+        setLoaded(false);
       }
+      const optThumbStyles = thumbnailClassName ? {} : {...${optThumbnailStyles}, ...thumbnailStyles};
+      const optImageStyles = rest.className ? {} : {...${optImageStyles}, ...imageStyles};
 
       return (
         <React.Fragment>
-          {!loaded && <img src="${thumbnail}" className={thumbnailClassName} style={{...thumbnailStyles, ...${optThumbnailStyles}, filter: "blur(10px)"}} />}
-          <img {...rest} src={${fileName}} style={{ ...imageStyles, ...${optImageStyles}, [!loaded && 'display']: "none"}} onLoad={onLoad} />
+          {!loaded && <img src="${thumbnail}" className={thumbnailClassName} style={{...optThumbStyles, filter: "blur(10px)"}} />}
+          <img {...rest} src={${fileName}} style={{ ...optImageStyles, [!loaded && 'display']: "none"}} onLoad={onLoad} />
         </React.Fragment>
       )
     }
   `;
 };
+
+module.exports.raw = true;
