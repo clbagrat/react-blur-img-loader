@@ -80,7 +80,7 @@ module.exports = function loader(content) {
     export default function ({thumbnailStyles = { width: "100%" }, imageStyles = { width: "100%" }, thumbnailClassName, ...rest}) {
       const [loaded, setLoaded] = useState(false);
       const onLoad = () => {
-        setLoaded(false);
+        setLoaded(true);
       }
       const optThumbStyles = thumbnailClassName ? {} : {...${optThumbnailStyles}, ...thumbnailStyles};
       const optImageStyles = rest.className ? {} : {...${optImageStyles}, ...imageStyles};
