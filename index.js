@@ -1,8 +1,8 @@
-const { createCanvas, Image } = require(`canvas`);
+const sharp = require("sharp");
 const fileLoader = require(`file-loader`);
 const { getOptions } = require("loader-utils");
 
-module.exports = function loader(content) {
+module.exports = async function loader(content) {
   const extensionMatch = this.resourcePath.match(/.(jpg|png|svg)$/i);
   if (!extensionMatch) {
     throw new Error(
@@ -11,6 +11,8 @@ module.exports = function loader(content) {
   }
 
   const options = getOptions(this) || {};
+
+  const callback = this.async();
 
   const mimeTypes = {
     jpg: "jpg",
@@ -21,12 +23,14 @@ module.exports = function loader(content) {
   const optThumbnailStyles = JSON.stringify(options.thumbnailStyles || {});
   const optImageStyles = JSON.stringify(options.imageStyles || {});
 
-  const img64 = `data:image/${
-    mimeTypes[extensionMatch[1]]
-  };base64,${Buffer.from(content).toString("base64")}`;
-
   if (options.limit && content.length < options.limit) {
-    return `
+    const img64 = `data:image/${
+      mimeTypes[extensionMatch[1]]
+    };base64,${Buffer.from(content).toString("base64")}`;
+
+    callback(
+      null,
+      `
     import React, {useState} from 'react';
 
     export default function ({imageStyles = {width: "100%"}, ...rest}) {
@@ -38,30 +42,37 @@ module.exports = function loader(content) {
         </React.Fragment>
       )
     }
-    `;
+    `
+    );
   }
+  const thumbnailBuffer = await sharp(content)
+    .metadata()
+    .then(({ width, height }) => {
+      const { thumbnailMaxWidth = 50, thumbnailMaxHeight = 50 } = options;
 
-  let img = new Image();
-  img.src = img64;
+      const maxWidth = Math.min(thumbnailMaxWidth, width);
+      const maxHeight = Math.min(thumbnailMaxHeight, height);
+      let targetWidth, targetHeight;
+      if (width > height) {
+        targetWidth = maxWidth;
+        targetHeight =
+          Math.max(height, thumbnailMaxHeight) * (maxWidth / width);
+      } else {
+        targetWidth = Math.max(width, thumbnailMaxWidth) * (maxHeight / height);
+        targetHeight = maxHeight;
+      }
 
-  const { thumbnailMaxWidth = 50, thumbnailMaxHeight = 50 } = options;
+      return sharp(content)
+        .resize({
+          width: Math.round(targetWidth),
+          height: Math.round(targetHeight),
+        })
+        .toBuffer();
+    });
 
-  const maxWidth = Math.min(thumbnailMaxWidth, img.width);
-  const maxHeight = Math.min(thumbnailMaxHeight, img.height);
-  let width, height;
-  if (img.width > img.height) {
-    width = maxWidth;
-    height = Math.max(img.height, thumbnailMaxHeight) * (maxWidth / img.width);
-  } else {
-    width = Math.max(img.width, thumbnailMaxWidth) * (maxHeight / img.height);
-    height = maxHeight;
-  }
-
-  const canvas = createCanvas(width, height);
-  const context2d = canvas.getContext(`2d`);
-  canvas.height = height;
-  context2d.drawImage(img, 0, 0, width, height);
-  const thumbnail = canvas.toDataURL("image/png");
+  const thumbnail = `data:image/${
+    mimeTypes[extensionMatch[1]]
+  };base64,${thumbnailBuffer.toString("base64")}`;
 
   const fileName = fileLoader
     .call(
@@ -74,7 +85,7 @@ module.exports = function loader(content) {
     .replace(`export default`, ``)
     .replace(`;`, ``);
 
-  return `
+  const result = `
     import React, {useState} from 'react';
 
     export default function ({thumbnailStyles = { width: "100%" }, imageStyles = { width: "100%" }, thumbnailClassName, ...rest}) {
@@ -93,6 +104,7 @@ module.exports = function loader(content) {
       )
     }
   `;
+  callback(null, result);
 };
 
 module.exports.raw = true;
