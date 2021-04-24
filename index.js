@@ -3,7 +3,8 @@ const fileLoader = require(`file-loader`);
 const { getOptions } = require("loader-utils");
 
 module.exports = async function loader(content) {
-  const extensionMatch = this.resourcePath.match(/.(jpg|png|svg)$/i);
+  const extensionMatch = this.resourcePath.match(/.(jpg|jpeg|png|svg)$/i);
+
   if (!extensionMatch) {
     throw new Error(
       "unexpected file extension. Supported extension: jpg, svg, png"
@@ -16,6 +17,7 @@ module.exports = async function loader(content) {
 
   const mimeTypes = {
     jpg: "jpg",
+    jpeg: "jpeg",
     png: "png",
     svg: "svg+xml",
   };
@@ -45,6 +47,7 @@ module.exports = async function loader(content) {
     `
     );
   }
+
   const thumbnailBuffer = await sharp(content)
     .metadata()
     .then(({ width, height }) => {
@@ -63,6 +66,7 @@ module.exports = async function loader(content) {
       }
 
       return sharp(content)
+        .toFormat("png")
         .resize({
           width: Math.round(targetWidth),
           height: Math.round(targetHeight),
@@ -70,9 +74,9 @@ module.exports = async function loader(content) {
         .toBuffer();
     });
 
-  const thumbnail = `data:image/${
-    mimeTypes[extensionMatch[1]]
-  };base64,${thumbnailBuffer.toString("base64")}`;
+  const thumbnail = `data:image/png;base64,${thumbnailBuffer.toString(
+    "base64"
+  )}`;
 
   const fileName = fileLoader
     .call(
