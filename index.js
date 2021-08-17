@@ -46,6 +46,7 @@ module.exports = async function loader(content) {
     }
     `
     );
+    return;
   }
 
   const thumbnailBuffer = await sharp(content)
